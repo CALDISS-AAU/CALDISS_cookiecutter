@@ -19,7 +19,19 @@ pip install cookiecutter
 Generate a new project:
 
 ```bash
-cookiecutter https://github.com/CALDISS-AAU/<repo-name>.git
+cookiecutter https://github.com/CALDISS-AAU/CALDISS_cookiecutter.git
+```
+
+Create uv-environment within the new project:
+```bash
+cd {{ cookiecutter.project_name }}
+uv sync
+```
+
+Make git compatible:
+```bash
+cd {{ cookiecutter.project_name }}
+git init
 ```
 
 ---
