@@ -6,7 +6,7 @@
 
     To run this script, please use this command in the terminal, 
     from the project root:
-    uv run python -m main
+        uv run python -m main
 """
 ## IMPORTS ##
 # Pipeline mains

@@ -49,114 +49,102 @@ FOLDERS_TO_GENERATE = [
     "Tests"
 ]
 
-PIPELINE_MAIN_TEXT = (f'\
-    """ Main script for the {folder_name} pipeline.
-    
-        To run this script, please use this command in the terminal,
-        from the project root:
-            uv run python -m Pipelines.{folder_name}.{file_name}"""\
-    \n\
-    \n## IMPORTS ##\
-    \n# Internal\
-    \nfrom Shared_Functions.logger_functionality import *\
-    \nfrom .Functions.example_functions_script import example_function\
-    \n## _______ ##\
-    \n\
-    \n## STATIC VARIABLES ##\
-    \n# Directories - input\
-    \n#INPUT_DIR_AAA = "xxx/yyy.zzz"\
-    \n\
-    \n# Directories - internal output\
-    \n#OUTPUT_DIR_AAA = "Pipelines/{folder_name}/Data/xxx.zzz"\
-    \n\
-    \n# Directories - global output\
-    \n#OUTPUT_DIR_AAA = "./Data/{folder_name}/xxx.zzz"\
-    \n\
-    \n# Directories - logs\
-    \nOUTPUT_DIR_LOG_FULL_PIPELINE = "./Pipelines/{folder_name}/Logs/full_pipeline.log"\
-    \nOUTPUT_DIR_LOG_1 = "./Pipelines/{folder_name}/Logs/example_1.log"\
-    \nOUTPUT_DIR_LOG_2 = "./Pipelines/{folder_name}/Logs/example_2.log"\
-    \n\
-    \n# Other\
-    \n## _______________________ ##\
-    \n\
-    \n## HELPER FUNCTIONS ##\
-    \n## ________________ ##\
-    \n\
-    \n## MAIN FUNCTION ##\
-    \ndef main() -> None:\ 
-    \n    """Run the full ACT {folder_name.lower()} pipeline.\
-    \n       Executes step 1 and step 2, and rebuilding of the combined pipeline log.\
-    \n    """\
-    \n    example_function(\
-    \n        input_str="Hello",\
-    \n        logger=setup_logger(\
-    \n            output_dir_log=OUTPUT_DIR_LOG_1,\
-    \n            logger_name="{folder_name.lower()}.step_1",\
-    \n        ),\
-    \n    )\
-    \n\
-    \n    example_function(\
-    \n        input_str="world!",\
-    \n        logger=setup_logger(\
-    \n            output_dir_log=OUTPUT_DIR_LOG_2,\
-    \n            logger_name="{folder_name.lower()}.step_2",\
-    \n        ),\
-    \n\
-    \n    rebuild_pipeline_log(\
-    \n        step_log_paths=[\
-    \n            OUTPUT_DIR_LOG_1,\
-    \n            OUTPUT_DIR_LOG_2,\
-    \n        ],\
-    \n        output_dir_log=OUTPUT_DIR_LOG_FULL_PIPELINE,\
-    \n    )\
-    \n\
-    \n## _____________ ##\
-    \n\
-    \n## CALL OF MAIN FUNCTION ##\
-    \nif __name__ == "__main__":\
-    \n    main()')
+PIPELINE_MAIN_TEXT = '''"""Main script for the {folder_name} pipeline.
 
-PIPELINE_EXAMPLE_FUNCTIONS_SCRIPT_TEXT = (f'\
-    """Generate additional working datasets from cleaned ACT message data.
-    The module creates alternative representations of the cleaned message
-        dataset for downstream analyses. It generates a dataset with
-        consecutive messages collapsed by sender and a conversation-level
-        dataset where all messages are combined into a single row.
-    """\
-    \n\
-    \n## IMPORTS ##\
-    \n# Standard\
-    \nimport logging\
-    \n\
-    \n# External\
-    \n## _______ ##\
-    \n\
-    \n## HELPER FUNCTIONS ##\
-    \ndef _print_str(\
-    \n    input_str: str,\
-    \n    logger: logging.Logger,\
-    \n) -> None:\
-    \n    """Prints a given string to the terminal."""\
-    \n\
-    \n    print(input_str)\
-    \n\
-    \n    logger.info(f"{input_str} has been printed in the terminal.")
-    \n## ________________ ##\
-    \n\
-    \n## MAIN FUNCTIONALITY ##\
-    \ndef combine_example_functions(\
-    \n    input_str: str,\
-    \n    logger: logging.Logger,\
-    \n) -> None:\
-    \n    """Combines all helper functions within this script.\
-    \n\
-    \n    Args:\
-    \n        input_str: String to be printed.\
-    \n        logger: Logger used to write processing information.\
-    \n    """\
-    \n    _print_str(input_str, logger)\
-    \n## __________________ ##')
+To run this script, use the following command from the project root:
+    uv run python -m Pipelines.{folder_name}.{file_name}_main
+"""
+
+## IMPORTS ##
+# Internal
+from Shared_Functions.logger_functionality import *
+from .Functions.example_functions_script import example_function
+## _______ ##
+
+
+## STATIC VARIABLES ##
+# Directories - input
+# INPUT_DIR_AAA = "xxx/yyy.zzz"
+
+# Directories - internal output
+# OUTPUT_DIR_AAA = "Pipelines/{folder_name}/Data/xxx.zzz"
+
+# Directories - global output
+# OUTPUT_DIR_AAA = "./Data/{folder_name}/xxx.zzz"
+
+# Directories - logs
+OUTPUT_DIR_LOG_FULL_PIPELINE = "./Pipelines/{folder_name}/Logs/full_pipeline.log"
+OUTPUT_DIR_LOG_1 = "./Pipelines/{folder_name}/Logs/example_1.log"
+OUTPUT_DIR_LOG_2 = "./Pipelines/{folder_name}/Logs/example_2.log"
+
+## _______________________ ##
+
+
+## HELPER FUNCTIONS ##
+## ________________ ##
+
+
+## MAIN FUNCTION ##
+def main() -> None:
+    """Run the full {folder_name} pipeline."""
+
+    example_function(
+        input_str="Hello",
+        logger=setup_logger(
+            output_dir_log=OUTPUT_DIR_LOG_1,
+            logger_name="{file_name}.step_1",
+        ),
+    )
+
+    example_function(
+        input_str="World!",
+        logger=setup_logger(
+            output_dir_log=OUTPUT_DIR_LOG_2,
+            logger_name="{file_name}.step_2",
+        ),
+    )
+
+    rebuild_pipeline_log(
+        step_log_paths=[
+            OUTPUT_DIR_LOG_1,
+            OUTPUT_DIR_LOG_2,
+        ],
+        output_dir_log=OUTPUT_DIR_LOG_FULL_PIPELINE,
+    )
+
+
+## CALL OF MAIN FUNCTION ##
+if __name__ == "__main__":
+    main()
+'''
+
+PIPELINE_EXAMPLE_FUNCTIONS_SCRIPT_TEXT = '''"""Example helper functions for the pipeline."""
+
+## IMPORTS ##
+import logging
+## _______ ##
+
+
+## HELPER FUNCTIONS ##
+def _print_str(
+    input_str: str,
+    logger: logging.Logger,
+) -> None:
+    """Print a string and log it."""
+
+    print(input_str)
+    logger.info("%s has been printed in the terminal.", input_str)
+
+
+## MAIN FUNCTIONALITY ##
+def example_function(
+    input_str: str,
+    logger: logging.Logger,
+) -> None:
+    """Example function for new pipelines."""
+
+    _print_str(input_str, logger)
+'''
 # _________ #
 
 # HELPER FUNCTIONS #
@@ -221,10 +209,22 @@ def create_pipeline(name: str) -> None:
         (folder_path / ".gitkeep").touch()
 
     script_path = pipeline_path / f"{file_name}_main.py"
-    script_path.write_text(PIPELINE_MAIN_TEXT)
+    script_path.write_text(
+        PIPELINE_MAIN_TEXT.format(
+            folder_name=folder_name,
+            file_name=file_name,
+        ),
+        encoding="utf-8",
+    )
 
-    functions_script_path = pipeline_path / "Functions" / "example_functions_script"
-    functions_script_path.write_text(PIPELINE_EXAMPLE_FUNCTIONS_SCRIPT_TEXT)
+    functions_script_path = (
+        pipeline_path / "Functions" / "example_functions_script.py"
+    )
+
+    functions_script_path.write_text(
+        PIPELINE_EXAMPLE_FUNCTIONS_SCRIPT_TEXT,
+        encoding="utf-8",
+    )
 
     readme_path = pipeline_path / f"{file_name}_README.md"
     readme_path.write_text(f"# {folder_name} README\n")
