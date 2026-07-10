@@ -49,6 +49,10 @@ FOLDERS_TO_GENERATE = [
     "Tests"
 ]
 
+OPTIONAL_FOLDERS = {
+    "model": ["Modelling"],
+}
+
 PIPELINE_MAIN_TEXT = '''"""Main script for the {folder_name} pipeline.
 
 To run this script, use the following command from the project root:
@@ -176,24 +180,33 @@ def find_project_root() -> Path:
 # ________________ #
 
 # COMBINING ALL HELPERFUNTIONS #
-def create_pipeline(name: str) -> None:
+def create_pipeline(
+    name: str,
+    included_folders: list[str] | None = None,
+) -> None:
     """Create a standardized pipeline folder structure.
-
-    Generate a new pipeline directory within the project's Pipelines
-    folder, including the required subfolders and starter files.
 
     Parameters
     ----------
     name : str
         Name of the pipeline to create.
+    included_folders : list[str] | None
+        Optional folder groups to include.
 
     Raises
     ------
     FileExistsError
         If the pipeline directory already exists.
+    ValueError
+        If the pipeline name is invalid.
     """
     folder_name = to_capital_snake_case(name)
     file_name = to_snake_case(name)
+
+    if not folder_name:
+        raise ValueError(
+            "Pipeline name must contain at least one alphanumeric character."
+        )
 
     project_root = find_project_root()
     pipeline_path = project_root / "Pipelines" / folder_name
@@ -201,9 +214,17 @@ def create_pipeline(name: str) -> None:
     if pipeline_path.exists():
         raise FileExistsError(f"Pipeline already exists: {folder_name}")
 
+    folders_to_generate = FOLDERS_TO_GENERATE.copy()
+
+    for inclusion in included_folders or []:
+        folders_to_generate.extend(OPTIONAL_FOLDERS[inclusion])
+
+    # Remove duplicates while preserving order.
+    folders_to_generate = list(dict.fromkeys(folders_to_generate))
+
     pipeline_path.mkdir(parents=True)
 
-    for folder in FOLDERS_TO_GENERATE:
+    for folder in folders_to_generate:
         folder_path = pipeline_path / folder
         folder_path.mkdir()
         (folder_path / ".gitkeep").touch()
@@ -218,7 +239,9 @@ def create_pipeline(name: str) -> None:
     )
 
     functions_script_path = (
-        pipeline_path / "Functions" / "example_functions_script.py"
+        pipeline_path
+        / "Functions"
+        / "example_functions_script.py"
     )
 
     functions_script_path.write_text(
@@ -227,24 +250,55 @@ def create_pipeline(name: str) -> None:
     )
 
     readme_path = pipeline_path / f"{file_name}_README.md"
-    readme_path.write_text(f"# {folder_name} README\n")
+    readme_path.write_text(
+        f"# {folder_name} README\n",
+        encoding="utf-8",
+    )
 
     print(f"Created pipeline: {folder_name}")
+    print(f"Generated folders: {', '.join(folders_to_generate)}")
 # ____________________________ #
 
 # FUNCTION MAIN #
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("pipeline_name", nargs="+")
+    """Run the create-pipeline command-line interface."""
+    parser = argparse.ArgumentParser(
+        description="Create a standardized pipeline structure."
+    )
+
+    parser.add_argument(
+        "pipeline_name",
+        nargs="+",
+        help="Name of the pipeline to create.",
+    )
+
+    parser.add_argument(
+        "-i",
+        "--include",
+        action="append",
+        choices=OPTIONAL_FOLDERS,
+        default=[],
+        help=(
+            "Include an optional folder group. "
+            "May be supplied more than once."
+        ),
+    )
 
     args = parser.parse_args()
     pipeline_name = " ".join(args.pipeline_name)
 
     try:
-        create_pipeline(pipeline_name)
+        create_pipeline(
+            name=pipeline_name,
+            included_folders=args.include,
+        )
 
-    except (FileExistsError, FileNotFoundError) as error:
-        print(error)
+    except (
+        FileExistsError,
+        FileNotFoundError,
+        ValueError,
+    ) as error:
+        parser.exit(status=1, message=f"Error: {error}\n")
 
 
 if __name__ == "__main__":
