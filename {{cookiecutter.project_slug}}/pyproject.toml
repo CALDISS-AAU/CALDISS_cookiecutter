@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "{{ cookiecutter.project_slug }}"
 version = "0.1.0"
@@ -8,5 +12,6 @@ dependencies = []
 create-pipeline = "Shared_Functions.Pipeline_Functions.pipeline_generator:main"
 clear-pipeline = "Shared_Functions.Pipeline_Functions.wipe_pipeline_data:main"
 
-[tool.setuptools]
-packages = ["Shared_Functions"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["Shared_Functions*"]
