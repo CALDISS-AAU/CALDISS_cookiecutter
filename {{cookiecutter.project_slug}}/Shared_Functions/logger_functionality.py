@@ -34,7 +34,7 @@ def setup_logger(
     mode = "w" if overwrite else "a"
 
     file_handler = logging.FileHandler(log_file, mode=mode)
-    file_handler.setFormatter(logging.Formatter("%(message)s"))
+    file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s"))
 
     logger.addHandler(file_handler)
 
