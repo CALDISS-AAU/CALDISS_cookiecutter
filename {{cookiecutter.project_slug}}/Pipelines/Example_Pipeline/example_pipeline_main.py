@@ -34,7 +34,7 @@ OUTPUT_DIR_LOG_2 = "./Pipelines/Example_Pipeline/Logs/example_2.log"
 
 
 ## MAIN FUNCTION ##
-def main() -> None:
+def example_pipeline_main() -> None:
     """Run the full Example_Pipeline pipeline."""
 
     example_function(
@@ -64,4 +64,4 @@ def main() -> None:
 
 ## CALL OF MAIN FUNCTION ##
 if __name__ == "__main__":
-    main()
+    example_pipeline_main()
