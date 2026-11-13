@@ -17,7 +17,7 @@ Pipelines/*/Data/*
 
 # Example scripts
 Pipelines/Example_Pipeline
-Pipelines/*/Functions/example_functions.script.py
+Pipelines/*/Functions/example_functions_script.py
 
 # Logs
 Pipelines/*/Logs/*
