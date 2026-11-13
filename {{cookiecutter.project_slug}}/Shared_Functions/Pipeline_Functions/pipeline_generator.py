@@ -30,7 +30,6 @@ This generates:
         ├── Data/
         ├── Functions/
         ├── Logs/
-        ├── Tests/
         ├── data_cleaning_main.py
         └── data_cleaning_README.md
 """
@@ -46,7 +45,6 @@ FOLDERS_TO_GENERATE = [
     "Data", 
     "Functions", 
     "Logs", 
-    "Tests"
 ]
 
 OPTIONAL_FOLDERS = {
@@ -89,7 +87,7 @@ OUTPUT_DIR_LOG_2 = "./Pipelines/{folder_name}/Logs/example_2.log"
 
 
 ## MAIN FUNCTION ##
-def main() -> None:
+def {file_name}_main() -> None:
     """Run the full {folder_name} pipeline."""
 
     example_function(
@@ -119,7 +117,7 @@ def main() -> None:
 
 ## CALL OF MAIN FUNCTION ##
 if __name__ == "__main__":
-    main()
+    {file_name}_main()
 '''
 
 PIPELINE_EXAMPLE_FUNCTIONS_SCRIPT_TEXT = '''"""Example helper functions for the pipeline."""
@@ -183,6 +181,7 @@ def find_project_root() -> Path:
 def create_pipeline(
     name: str,
     included_folders: list[str] | None = None,
+    preserve_case: bool = False,
 ) -> None:
     """Create a standardized pipeline folder structure.
 
@@ -200,12 +199,21 @@ def create_pipeline(
     ValueError
         If the pipeline name is invalid.
     """
-    folder_name = to_capital_snake_case(name)
-    file_name = to_snake_case(name)
+    folder_name = (
+        "_".join(split_words(name))
+        if preserve_case
+        else to_capital_snake_case(name)
+    )
+    file_name = folder_name if preserve_case else to_snake_case(name)
 
     if not folder_name:
         raise ValueError(
             "Pipeline name must contain at least one alphanumeric character."
+        )
+
+    if file_name[0].isdigit():
+        raise ValueError(
+            "Pipeline name must start with a letter."
         )
 
     project_root = find_project_root()
@@ -284,6 +292,12 @@ def main() -> None:
         ),
     )
 
+    parser.add_argument(
+        "--preserve-case",
+        action="store_true",
+        help="Preserve the supplied casing in the pipeline folder name.",
+    )
+
     args = parser.parse_args()
     pipeline_name = " ".join(args.pipeline_name)
 
@@ -291,6 +305,7 @@ def main() -> None:
         create_pipeline(
             name=pipeline_name,
             included_folders=args.include,
+            preserve_case=args.preserve_case,
         )
 
     except (
