@@ -10,7 +10,7 @@
 """
 ## IMPORTS ##
 # Pipeline mains
-from Pipelines.Example_Pipeline.example_pipeline_main import main as example_pipeline_main
+from Pipelines.Example_Pipeline.example_pipeline_main import example_pipeline_main
 ## _______ ##
 
 ## MAIN FUNCTION ##
