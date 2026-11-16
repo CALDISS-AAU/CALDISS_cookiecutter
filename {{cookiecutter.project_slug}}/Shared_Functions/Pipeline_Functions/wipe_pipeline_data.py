@@ -1,28 +1,28 @@
-"""Clear generated data and log files from a pipeline.
+"""Clear generated data and log files from an exact pipeline folder.
 
-This module provides a command-line interface for removing all files and
-subdirectories from a pipeline's Data and Logs directories.
+This module provides the `clear-pipeline` command, which removes files
+and subdirectories from a pipeline's Data and Logs directories.
 
-The Data and Logs directories themselves are preserved, along with their
-.gitkeep files.
+The Data and Logs directories themselves are preserved, along with
+their directly contained .gitkeep files.
+
+Pipeline names must match the existing folder name exactly, including
+casing and underscores. No name normalization is performed.
 
 Usage
 -----
-Clear a pipeline from the terminal:
+    uv run clear-pipeline Data_Cleaning
+    uv run clear-pipeline BERTopic
 
-    clear-pipeline pipeline_name
+Run the command from the project root or an environment configured
+for this project.
 
-Pipeline names may contain spaces, underscores, mixed casing, and numbers.
-
-Example
--------
-    clear-pipeline data cleaning
+Contents are deleted without a confirmation prompt.
 """
 
 # IMPORTS #
 from pathlib import Path
 import argparse
-import re
 import shutil
 # _______ #
 
@@ -36,23 +36,12 @@ FOLDERS_TO_CLEAR = [
 
 
 # HELPER FUNCTIONS #
-def split_words(text: str) -> list[str]:
-    """Split text into alphanumeric words."""
-    return re.findall(r"[A-Za-z0-9]+", text)
-
-
-def to_capital_snake_case(text: str) -> str:
-    """Convert text to Capital_Snake_Case."""
-    words = split_words(text)
-    return "_".join(word.lower().capitalize() for word in words)
-
-
 def find_project_root() -> Path:
     """Find the nearest parent directory containing pyproject.toml."""
     current_path = Path.cwd()
 
     for path in [current_path, *current_path.parents]:
-        if (path / "pyproject.toml").exists():
+        if (path / "pyproject.toml").is_file():
             return path
 
     raise FileNotFoundError(
@@ -61,7 +50,7 @@ def find_project_root() -> Path:
 
 
 def clear_directory(directory_path: Path) -> None:
-    """Remove all contents from a directory except .gitkeep.
+    """Remove all contents except directly contained .gitkeep files.
 
     Parameters
     ----------
@@ -81,44 +70,67 @@ def clear_directory(directory_path: Path) -> None:
 
 # MAIN FUNCTIONALITY #
 def clear_pipeline(name: str) -> None:
-    """Clear the Data and Logs directories for a pipeline.
+    """Clear the Data and Logs directories for an exact pipeline name.
 
     Parameters
     ----------
     name : str
-        Name of the pipeline to clear.
+        Exact pipeline folder name, including casing and underscores.
 
     Raises
     ------
-    ValueError
-        If the supplied pipeline name contains no alphanumeric characters.
     FileNotFoundError
-        If the project root or pipeline directory cannot be found.
+        If the project root, Pipelines directory, or exact pipeline
+        directory cannot be found.
+    NotADirectoryError
+        If a pipeline's Data or Logs path is not a directory.
+    ValueError
+        If a selected pipeline or cleanup directory is a symbolic link.
     """
-    folder_name = to_capital_snake_case(name)
-
-    if not folder_name:
-        raise ValueError(
-            "Pipeline name must contain at least one alphanumeric character."
-        )
-
     project_root = find_project_root()
     pipelines_root = project_root / "Pipelines"
-    pipeline_path = pipelines_root / folder_name
 
-    if not pipeline_path.is_dir():
+    if not pipelines_root.is_dir():
         raise FileNotFoundError(
-            f"Pipeline does not exist: {folder_name}"
+            "Could not find the Pipelines directory."
         )
 
-    cleared_folders: list[str] = []
+    # Compare actual directory names to enforce exact casing,
+    # including on filesystems that normally ignore case.
+    pipeline_path = next(
+        (
+            path
+            for path in pipelines_root.iterdir()
+            if path.name == name and path.is_dir()
+        ),
+        None,
+    )
 
-    for folder_name_to_clear in FOLDERS_TO_CLEAR:
-        folder_path = pipeline_path / folder_name_to_clear
+    if pipeline_path is None:
+        raise FileNotFoundError(
+            f"Pipeline does not exist with this exact name: {name}"
+        )
+
+    if pipeline_path.is_symlink():
+        raise ValueError(
+            f"Refusing to clear a symbolic-link pipeline: {name}"
+        )
+
+    # Validate all targets before deleting any contents.
+    directories_to_clear: list[Path] = []
+
+    for folder_name in FOLDERS_TO_CLEAR:
+        folder_path = pipeline_path / folder_name
+
+        if folder_path.is_symlink():
+            raise ValueError(
+                "Refusing to clear a symbolic-link directory: "
+                f"{folder_path.relative_to(project_root)}"
+            )
 
         if not folder_path.exists():
             print(
-                f"Skipped missing directory: "
+                "Skipped missing directory: "
                 f"{folder_path.relative_to(project_root)}"
             )
             continue
@@ -128,16 +140,24 @@ def clear_pipeline(name: str) -> None:
                 f"Expected a directory: {folder_path}"
             )
 
-        clear_directory(folder_path)
-        cleared_folders.append(folder_name_to_clear)
+        directories_to_clear.append(folder_path)
 
-    if cleared_folders:
-        folders_text = " and ".join(cleared_folders)
+    for folder_path in directories_to_clear:
+        clear_directory(folder_path)
+
+    if directories_to_clear:
+        folders_text = " and ".join(
+            folder_path.name
+            for folder_path in directories_to_clear
+        )
         print(
-            f"Cleared {folders_text} for pipeline: {folder_name}"
+            f"Cleared {folders_text} for pipeline: {pipeline_path.name}"
         )
     else:
-        print(f"No directories were cleared for pipeline: {folder_name}")
+        print(
+            f"No directories were cleared for pipeline: "
+            f"{pipeline_path.name}"
+        )
 # __________________ #
 
 
@@ -146,29 +166,26 @@ def main() -> None:
     """Run the pipeline-cleaning command-line interface."""
     parser = argparse.ArgumentParser(
         description=(
-            "Remove all contents from a pipeline's Data and Logs "
-            "directories."
+            "Remove contents from a pipeline's Data and Logs "
+            "directories. The pipeline folder name must match exactly. "
+            "Files are deleted without confirmation."
         )
     )
 
     parser.add_argument(
         "pipeline_name",
-        nargs="+",
-        help="Name of the pipeline to clear.",
+        help=(
+            "Exact pipeline folder name, including casing "
+            "and underscores."
+        ),
     )
 
     args = parser.parse_args()
-    pipeline_name = " ".join(args.pipeline_name)
 
     try:
-        clear_pipeline(pipeline_name)
+        clear_pipeline(name=args.pipeline_name)
 
-    except (
-        FileNotFoundError,
-        NotADirectoryError,
-        PermissionError,
-        ValueError,
-    ) as error:
+    except (OSError, ValueError) as error:
         parser.exit(status=1, message=f"Error: {error}\n")
 
 
